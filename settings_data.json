@@ -1,0 +1,12 @@
+{
+   "general": {
+      "accuracy": 6,
+      "left_interval": -100,
+      "right_interval": 100
+   },
+   "comparing": {
+      "first_accuracy": 4,
+      "second_accuracy": 6,
+      "third_accuracy": 7
+   }
+}

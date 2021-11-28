@@ -1,12 +1,13 @@
 from builtins import max
 
 from sympy import *
-import numexpr
+import numexpr as ne
+from math import isnan, log10
 
 X_ARG = Symbol("x")
 MAX_CHORD_ITERATION_NUMBER = 150
 MAX_DOMAIN_LENGTH = 30
-PRECISION_AFTER_DECIMAL_POINT = 3
+PRECISION_AFTER_DECIMAL_POINT = 5
 
 
 def remove_extreme_points(function, beg, end):
@@ -88,6 +89,7 @@ def filter_intervals_by_second_der(function, input_intervals):
         else:
             intervals_with_root.extend(filter_intervals_with_roots(function, possible_points_set, beg, end))
 
+    # return [[float(arg1), float(arg2)] for arg1, arg2 in intervals_with_root]
     return intervals_with_root
 
 
@@ -111,7 +113,10 @@ def find_intervals_with_root(function, interval_begin=-100, interval_end=100):
 
 
 def eval_func(func, arg):
-    return round(func.evalf(subs={X_ARG: arg}), 14)
+    x = float(arg)
+    return float(ne.evaluate(str(func)))
+    # return round(func.evalf(subs={X_ARG: arg}), 14)
+
 
 def derivative(function, rank=1):
     for i in range(rank):
@@ -163,9 +168,9 @@ def next_point(func, prev_x, fixed_x):
 def is_convergence_condition_satisfied(function, beg, end):
     second_derivative_of_func = derivative(function, 2)
 
-    if beg * end > 0:
+    if eval_func(function, beg) * eval_func(function, end) > 0:
         return False
-    if find_intervals_with_root(second_derivative_of_func) > 0:
+    if len(find_intervals_with_root(second_derivative_of_func, beg, end)) > 0:
         return False
     if not is_defined_function(function, beg, end):
         return False
@@ -174,14 +179,19 @@ def is_convergence_condition_satisfied(function, beg, end):
 
 
 def is_defined_function(function, beg, end):
-    iter = (end - beg)/100
+    iter = (end - beg) / 100
     argument = beg
     for i in range(100):
         value = eval_func(function, argument)
-        if value.is_complex:
+        if isnan(value):
             return False
         argument += iter
     return True
+
+
+def trim_number(number, decimal_value):
+    return round((((number * 10 ** decimal_value) // 1) / 10.0 ** (decimal_value)), decimal_value)
+
 
 def the_chord_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION_AFTER_DECIMAL_POINT)):
     if not safe_mode:
@@ -202,38 +212,52 @@ def the_chord_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION_
         iteration_number += 1
         next_x = next_point(function, previous_x, fixed_x)
         if is_accuracy_achieved(next_x, previous_x, eps):
-            return [next_x, iteration_number]
+            PRECISION_POINT = int(log10(eps))
+            return [trim_number(float(next_x), -PRECISION_POINT), iteration_number]
         previous_x = next_x
 
     return False
+
+
 # todo Исправить принятие информации в main
 
 def the_binary_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION_AFTER_DECIMAL_POINT)):
     if not safe_mode:
         if not is_defined_function(function, beg, end):
             return False
-        if beg * end > 0:
+        if eval_func(function, beg) * eval_func(function, end) > 0:
             return False
 
     start = beg
     final = end
 
     iter = 0
-    while (end - beg) / (2 ** iter) > eps:
+    # todo Заменить проверку на константу
+    while (end - beg) / (2 ** iter) >= eps and iter < 100000:
         pivot = (start + final) / 2.0
         if eval_func(function, start) * eval_func(function, pivot) < 0:
             final = pivot
         else:
             start = pivot
         iter += 1
-    return [start, iter]
+
+    if iter < 100000:
+        PRECISION_POINT = int(log10(eps))
+        return [trim_number(float(pivot), -PRECISION_POINT), iter]
+
+    return False
 
 
 if __name__ == "__main__":
     # f = sympify(input('Input function with "x" argument: '))
-    # f = X_ARG + cos(X_ARG) - 2
-    f = X_ARG**(1/2)
-    # f_str = "x**(1/2)"
-    print(is_defined_function(f, -1, 5))
+    f = X_ARG + cos(X_ARG) - 2
+    # f = cos(X_ARG) ** (2)
+
+    # f = X_ARG ** (1/2)
+    # print(is_defined_function(f, -3, 5))
+
     a, b = find_intervals_with_root(f)[0]
-    print('The first finding root: ' + the_chord_method(f, a, b)[0])
+    l, k = the_chord_method(f, a, b)
+    b, i = the_binary_method(f, a, b)
+    print('The first finding root: ', l, " - ", b)
+    print('Iteration number: ', k, " - ", i)
