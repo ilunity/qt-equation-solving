@@ -5,8 +5,8 @@
       "right_interval": 100
    },
    "comparing": {
-      "first_accuracy": 4,
-      "second_accuracy": 6,
-      "third_accuracy": 7
+      "first_accuracy": 3,
+      "second_accuracy": 4,
+      "third_accuracy": 8
    }
 }

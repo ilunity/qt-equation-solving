@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>input_intervals</class>
+ <widget class="QWidget" name="input_intervals">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>566</width>
+    <height>236</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Ввод интервалов</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(70, 70, 70);
+color: white;</string>
+  </property>
+  <widget class="QFrame" name="input_interval_frame">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>351</width>
+     <height>191</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(121, 121, 121);
+border-radius: 5px;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::StyledPanel</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
+   </property>
+   <widget class="QPushButton" name="reset_interval_btn">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>150</y>
+      <width>90</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#reset_interval_btn {
+	background-color: rgb(57, 156, 39);
+	color: white;
+	border-radius: 5px;
+}
+#reset_interval_btn:hover {
+	background-color: rgb(113, 180, 67);
+} 
+#reset_interval_btn:pressed {
+	background-color: rgb(84, 132, 49);
+}</string>
+    </property>
+    <property name="text">
+     <string>Сбросить</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="input_interval_label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>341</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Задайте левый и правый конец интервала:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="right_limit_of_interval">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>60</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(165, 165, 165);
+border-radius: 3px;
+color: rgb(41, 105, 255);</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="left_limit_of_interval">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>60</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="cursor">
+     <cursorShape>BusyCursor</cursorShape>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(165, 165, 165);
+border-radius: 3px;
+color: rgb(41, 105, 255);</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="delete_interval_btn">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>150</y>
+      <width>90</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#delete_interval_btn {
+	background-color: rgb(191, 4, 10);
+	color: white;
+	border-radius: 5px;
+}
+#delete_interval_btn:hover {
+	background-color: rgb(255, 0, 4);
+} 
+#delete_interval_btn:pressed {
+	background-color: rgb(180, 0, 3);
+}</string>
+    </property>
+    <property name="text">
+     <string>Удалить</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="add_interval_btn">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>150</y>
+      <width>90</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">#add_interval_btn {
+	background-color: rgb(0, 129, 194);
+	color: white;
+	border-radius: 5px;
+}
+#add_interval_btn:hover {
+	background-color: rgb(2, 190, 218);
+} 
+#add_interval_btn:pressed {
+	background-color: rgb(23, 92, 252);
+}</string>
+    </property>
+    <property name="text">
+     <string>Добавить</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="domain_input_label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>От               до</string>
+    </property>
+   </widget>
+   <zorder>reset_interval_btn</zorder>
+   <zorder>input_interval_label</zorder>
+   <zorder>right_limit_of_interval</zorder>
+   <zorder>delete_interval_btn</zorder>
+   <zorder>add_interval_btn</zorder>
+   <zorder>domain_input_label</zorder>
+   <zorder>left_limit_of_interval</zorder>
+  </widget>
+  <widget class="QLabel" name="entered_intervals_text">
+   <property name="geometry">
+    <rect>
+     <x>410</x>
+     <y>20</y>
+     <width>130</width>
+     <height>190</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(121, 121, 121);
+border-radius: 5px;
+padding-top: 2px;</string>
+   </property>
+   <property name="text">
+    <string>[0, 2]</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignHCenter|Qt::AlignTop</set>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

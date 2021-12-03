@@ -19,9 +19,11 @@ from sympy.vector import curl
 import solving as slv
 import settings_window as sw
 import input_intervals_window as iw
+import research_result as rr
 
 
 class Ui_MainWindow(object):
+    NO_ROOTS_WARNING = "No roots"
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -143,11 +145,13 @@ class Ui_MainWindow(object):
                                                       "line-height: 0;")
         self.input_intervals_info_label.setWordWrap(True)
         self.input_intervals_info_label.setObjectName("input_intervals_info_label")
-        self.answer_output_text = QtWidgets.QTextBrowser(self.info_frame)
-        self.answer_output_text.setGeometry(QtCore.QRect(25, 390, 341, 192))
-        self.answer_output_text.setStyleSheet("background-color: rgb(211, 211, 211);\n"
-                                              "border-radius: 5px;")
-        self.answer_output_text.setObjectName("answer_output_text")
+        self.result_label = QtWidgets.QLabel(self.info_frame)
+        self.result_label.setGeometry(QtCore.QRect(20, 400, 360, 190))
+        self.result_label.setStyleSheet("background-color: rgb(211, 211, 211);\n"
+                                        "border-radius: 5px;")
+        self.result_label.setText("")
+        self.result_label.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
+        self.result_label.setObjectName("result_label")
         self.container.addWidget(self.info_frame)
         self.graph_view = PlotWidget(self.horizontalLayoutWidget)
         self.graph_view.setMinimumSize(QtCore.QSize(800, 0))
@@ -161,7 +165,6 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        self.last_input_expr = ""
         self.event_handler()
 
     def retranslateUi(self, MainWindow):
@@ -194,16 +197,7 @@ class Ui_MainWindow(object):
         self.input_intervals.show()
 
     def btn_solve_handler(self):
-        input_expr = self.input_equation.text()
-        # if input_expr == "":
-        #     self.show_warning_message(self.NO_CHANGE_WARNING)
-        #     return
-        #
-        # if self.last_input_expr == input_expr:
-        #     self.show_warning_message(self.NO_CHANGE_WARNING)
-        #     return
-
-        self.last_input_expr = input_expr
+        self.clear_graph()
         self.finding_roots()
 
     # todo проверять пуста ли строка перед выводом ошибки
@@ -218,8 +212,8 @@ class Ui_MainWindow(object):
         def define_warning_message(warning_type):
             if warning_type == self.NO_ROOTS_WARNING:
                 return "Да данном промежутке корней нет."
-            if warning_type == self.NO_CHANGE_WARNING:
-                return "Выражение не было изменено."
+            # if warning_type == self.NO_CHANGE_WARNING:
+            #     return "Выражение не было изменено."
 
         def btn_handler(btn):
             if btn.text() == "Reset":
@@ -231,25 +225,55 @@ class Ui_MainWindow(object):
 
         warning_window.exec_()
 
-    def save_research_result(self, chord_results, binary_results):
+    def save_research_result(self, comparing_accuracy, chord_results, binary_results):
+        accuracy_set = []
+        for value in comparing_accuracy.values():
+            accuracy_set.append(value)
+
         research_data = {
+            "compared_accuracy": accuracy_set,
             "iteration_number": {
                 "chord_method": chord_results,
                 "binary_method": binary_results
             }
         }
-        with open("research_data.json", "w") as file:
+        with open("data/research_data.json", "w") as file:
             json.dump(research_data, file, indent=3, ensure_ascii=False)
 
+    def output_result(self, func, roots, accuracy):
+        if len(roots) == 0:
+            self.result_label.setText("\n Корни на данных интервалах не найдены.")
+        else:
+            self.print_roots(roots, accuracy)
+            only_number_roots_arr = [x for x in roots if (x != "null" and x != "iter_error")]
+
+            if len(only_number_roots_arr) > 0:
+                self.show_graph(func, only_number_roots_arr)
+            else:
+                self.show_warning_message(self.NO_ROOTS_WARNING)
+
+    def show_research_result(self):
+        self.research_result = QtWidgets.QMainWindow()
+        self.research_result_ui = rr.Ui_Form()
+        self.research_result_ui.setupUi(self.research_result)
+        self.research_result.show()
+
+    def print_roots(self, roots, accuracy):
+        output_message = f'\nЗаданная точность: {accuracy}' \
+                         f'\nНайденные корни:\n'
+        for root in roots:
+            output_message += f'{root}\n'
+
+        self.result_label.setText(output_message)
+
     def finding_roots(self):
-        # todo Разобраться с safe_mode
         CHORD_METHOD = "chord"
         BINARY_METHOD = "binary"
 
-        with open("settings_data.json", "r") as file:
+        with open("data/settings_data.json", "r") as file:
             settings_data = json.load(file)
 
-        with open("intervals_data.json", "r") as file:
+        with open("data/intervals_data.json", "r") as file:
             intervals_data = json.load(file)
 
         def define_function(inp_str):
@@ -277,8 +301,9 @@ class Ui_MainWindow(object):
             return [roots, iteration_sum]
 
         # todo отсеивать интервалы, не прошедшие проверку сходимости
-        def simple_finding(func, find_intervals=True):
-            if find_intervals:
+
+        def define_intervals(func, is_find_interval_mode):
+            if is_find_interval_mode:
                 interval_beg = settings_data["general"]["left_interval"]
                 interval_end = settings_data["general"]["right_interval"]
                 intervals_with_roots = slv.find_intervals_with_root(func, interval_beg, interval_end)
@@ -286,40 +311,39 @@ class Ui_MainWindow(object):
             else:
                 intervals_with_roots = intervals_data["intervals"]
                 is_safe_intervals = False
+            return intervals_with_roots, is_safe_intervals
+
+        def simple_finding(func, find_intervals=True):
+            intervals_with_roots, is_safe_intervals = define_intervals(func, find_intervals)
 
             PRECISION_POINT = settings_data["general"]["accuracy"]
             equation_roots = find_equation_roots(intervals_with_roots, method=CHORD_METHOD,
                                                  safe_mode=is_safe_intervals, eps=10 ** (-PRECISION_POINT))[0]
-            return equation_roots
+            return equation_roots, PRECISION_POINT
 
         # todo Обновлять данные исследования
         def comparing_finding(func, find_intervals=True):
-            if find_intervals:
-                interval_beg = settings_data["general"]["left_interval"]
-                interval_end = settings_data["general"]["right_interval"]
-                intervals_with_roots = slv.find_intervals_with_root(func, interval_beg, interval_end)
-                is_safe_intervals = True
-            else:
-                intervals_with_roots = intervals_data["intervals"]
-                is_safe_intervals = False
+            intervals_with_roots, is_safe_intervals = define_intervals(func, find_intervals)
 
             PRECISION_POINT_1 = settings_data["comparing"]["first_accuracy"]
             PRECISION_POINT_2 = settings_data["comparing"]["second_accuracy"]
             PRECISION_POINT_3 = settings_data["comparing"]["third_accuracy"]
 
-            # todo Расставить правильно точность
             equations_roots_by_chord = []
             chord_iterations_number = []
             equations_roots_by_binary = []
             binary_iterations_number = []
 
+            # todo Проверить тип переменной без значения
+            MAX_ACCURACY = max(PRECISION_POINT_1, PRECISION_POINT_2, PRECISION_POINT_3)
             if PRECISION_POINT_1 != "":
                 roots, iteration_num = find_equation_roots(intervals_with_roots, method=CHORD_METHOD,
                                                            safe_mode=is_safe_intervals, eps=10 ** (-PRECISION_POINT_1))
                 equations_roots_by_chord.append(roots)
                 chord_iterations_number.append(iteration_num)
 
-                current_result_roots = roots
+                if PRECISION_POINT_1 == MAX_ACCURACY:
+                    current_result_roots = roots
 
                 roots, iteration_num = find_equation_roots(intervals_with_roots, method=BINARY_METHOD,
                                                            safe_mode=is_safe_intervals, eps=10 ** (-PRECISION_POINT_1))
@@ -332,7 +356,8 @@ class Ui_MainWindow(object):
                 equations_roots_by_chord.append(roots)
                 chord_iterations_number.append(iteration_num)
 
-                current_result_roots = roots
+                if PRECISION_POINT_2 == MAX_ACCURACY:
+                    current_result_roots = roots
 
                 roots, iteration_num = find_equation_roots(intervals_with_roots, method=BINARY_METHOD,
                                                            safe_mode=is_safe_intervals, eps=10 ** (-PRECISION_POINT_2))
@@ -345,22 +370,17 @@ class Ui_MainWindow(object):
                 equations_roots_by_chord.append(roots)
                 chord_iterations_number.append(iteration_num)
 
-                current_result_roots = roots
+                if PRECISION_POINT_3 == MAX_ACCURACY:
+                    current_result_roots = roots
 
                 roots, iteration_num = find_equation_roots(intervals_with_roots, method=BINARY_METHOD,
                                                            safe_mode=is_safe_intervals, eps=10 ** (-PRECISION_POINT_3))
                 equations_roots_by_binary.append(roots)
                 binary_iterations_number.append(iteration_num)
 
-            self.save_research_result(chord_iterations_number, binary_iterations_number)
+            self.save_research_result(settings_data["comparing"], chord_iterations_number, binary_iterations_number)
 
-            return current_result_roots
-
-        def show_roots(roots):
-            if len(roots) > 0:
-                self.show_graph(func, roots)
-            else:
-                self.show_warning_message(self.NO_ROOTS_WARNING)
+            return current_result_roots, MAX_ACCURACY
 
         input_expr = self.input_equation.text()
 
@@ -368,16 +388,18 @@ class Ui_MainWindow(object):
         is_find_intervals = len(intervals_data["intervals"]) == 0
 
         # todo передается объект
-        if self.compare_method_ckbx == True:
-            equation_roots = comparing_finding(func, is_find_intervals)
-            show_roots(equation_roots)
+        if self.compare_method_ckbx.isChecked():
+            equation_roots, accuracy = comparing_finding(func, is_find_intervals)
+            self.show_research_result()
+            self.output_result(func, equation_roots, accuracy)
         else:
-            equation_roots = simple_finding(func, is_find_intervals)
-            show_roots(equation_roots)
+            equation_roots, accuracy = simple_finding(func, is_find_intervals)
+            self.output_result(func, equation_roots, accuracy)
 
     def show_graph(self, func, roots):
         # todo упростить определение основного интервала
         MIN_DOMAIN = 20
+
         def define_interval(roots):
             beg = roots[0]
             end = roots[-1]
@@ -385,7 +407,7 @@ class Ui_MainWindow(object):
                 beg -= MIN_DOMAIN
                 end += MIN_DOMAIN
             else:
-                step = (end - beg) / 10
+                step = abs(end - beg) / 5
                 beg -= step
                 end += step
             return beg, end
@@ -401,14 +423,17 @@ class Ui_MainWindow(object):
         GRAPH_BEGIN = BEG - ALL_POINTS_NUM / 2 * STEP
         x_array = [GRAPH_BEGIN + i * STEP for i in range(MAIN_INTERVAL_POINTS_NUM + ALL_POINTS_NUM)]
         y_array = [f(x) for x in x_array]
-
         self.graph_view.plot(x_array, y_array, pen="b")
-        self.graph_view.plot([-10 ** 14, 10 ** 14], [0, 0], pen="w")
+
+        # self.graph_view.plot([-10 ** 14, 10 ** 14], [0, 0], pen="w")
+
+        HALF_OF_DOMAIN = abs(END - BEG) / 2
         self.graph_view.setXRange(BEG, END, 0)
-        self.graph_view.setYRange(-MIN_DOMAIN, MIN_DOMAIN, 0)
+        self.graph_view.setYRange(-HALF_OF_DOMAIN, HALF_OF_DOMAIN, 0)
 
+        self.graph_view.showGrid(x=True, y=True, alpha=0.3)
 
-        # todo Запретить увеличение графика и фиксированные точки
+        # todo Правильно расставить метки
         for root in roots:
             self.graph_view.plot([root], [0], pen=None, symbol="o", symbolBrush="red", symbolPen="red")
             item = pyqtgraph.TextItem(str(root))

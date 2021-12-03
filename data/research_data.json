@@ -1,0 +1,19 @@
+{
+   "compared_accuracy": [
+      3,
+      4,
+      8
+   ],
+   "iteration_number": {
+      "chord_method": [
+         13,
+         16,
+         28
+      ],
+      "binary_method": [
+         12,
+         15,
+         28
+      ]
+   }
+}

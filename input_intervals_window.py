@@ -147,7 +147,7 @@ class Ui_input_intervals(object):
         self.entered_intervals_text.setText(output_message)
 
     def load_data(self):
-        with open("intervals_data.json", "r") as file:
+        with open("data/intervals_data.json", "r") as file:
             self.intervals_data = json.load(file)
 
         if len(self.intervals_data) == 0:
@@ -164,13 +164,13 @@ class Ui_input_intervals(object):
 
         def input_interval():
             input_text_array = [self.left_limit_of_interval.text(), self.right_limit_of_interval.text()]
-            interval = [int(x) for x in filter(lambda inp_txt: inp_txt != "", input_text_array)]
+            interval = [float(x) for x in filter(lambda inp_txt: inp_txt != "", input_text_array)]
             return interval
 
         def update_intervals_data(interval):
             self.intervals_data["intervals"].append(interval)
 
-            with open("intervals_data.json", "w") as file:
+            with open("data/intervals_data.json", "w") as file:
                 json.dump(self.intervals_data, file, indent=3, ensure_ascii=False)
 
         def update_entered_intervals_text(interval):
@@ -195,14 +195,14 @@ class Ui_input_intervals(object):
         if len(self.intervals_data["intervals"]) == 0:
             return
         self.intervals_data["intervals"].pop()
-        with open("intervals_data.json", "w") as file:
+        with open("data/intervals_data.json", "w") as file:
             json.dump(self.intervals_data, file, indent=3, ensure_ascii=False)
 
         self.refresh_entered_intervals_text()
 
     def reset_intervals(self):
         self.intervals_data = {"intervals": []}
-        with open("intervals_data.json", "w") as file:
+        with open("data/intervals_data.json", "w") as file:
             json.dump(self.intervals_data, file, indent=3, ensure_ascii=False)
         self.entered_intervals_text.setText("")
 

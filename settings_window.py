@@ -204,7 +204,7 @@ class Ui_settings_window(object):
                                         _translate("settings_window", "Параметры исследования"))
 
     def load_data(self):
-        with open("settings_data.json", "r") as file:
+        with open("data/settings_data.json", "r") as file:
             self.settings_data = json.load(file)
         self.accuracy_after_decimal_point.setSpecialValueText(str(self.settings_data["general"]["accuracy"]))
         self.left_limit_finding_interval.setText(str(self.settings_data["general"]["left_interval"]))
@@ -231,7 +231,7 @@ class Ui_settings_window(object):
         self.settings_data["comparing"]["second_accuracy"] = int(self.second_convergence_value.text())
         self.settings_data["comparing"]["third_accuracy"] = int(self.third_convergence_value.text())
 
-        with open("settings_data.json", "w") as file:
+        with open("data/settings_data.json", "w") as file:
             json.dump(self.settings_data, file, indent=3, ensure_ascii=False)
 
 

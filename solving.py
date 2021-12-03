@@ -6,7 +6,8 @@ from math import isnan, log10
 
 X_ARG = Symbol("x")
 MAX_CHORD_ITERATION_NUMBER = 150
-MAX_DOMAIN_LENGTH = 30
+MAX_BINARY_ITERATION_NUMBER = 1000
+MAX_DOMAIN_LENGTH = 15
 PRECISION_AFTER_DECIMAL_POINT = 5
 
 
@@ -35,7 +36,8 @@ def minimize_interval(function, beg, end):
     for i in range(2):
         iter = abs(end - beg) / 2
         iter = iter * (-1) if i == 1 else iter  # adding for left and subtracting fo right
-        while iter > 5 and abs(interval[0] - interval[1]) > MAX_DOMAIN_LENGTH:
+        # opposite_param = interval[0] if i == 1 else interval[1]
+        while abs(iter) > 5 and abs(interval[0] - interval[1]) > MAX_DOMAIN_LENGTH:
             new_param = interval[i] + iter
             if eval_func(function, interval[i]) * eval_func(function, new_param) < 0:
                 iter /= 2
@@ -54,7 +56,6 @@ def filter_intervals_with_roots(function, possible_points_set, interval_begin, i
     for param in possible_points_set:
         value = eval_func(function, param)
         if value * last_value < 0:
-            # intervals_with_roots.append([last_param.evalf(), param.evalf()])
             if param - last_param > MAX_DOMAIN_LENGTH:
                 last_param, param = minimize_interval(function, last_param, param)
             intervals_with_roots.append([x.evalf() for x in remove_extreme_points(function, last_param, param)])
@@ -64,10 +65,12 @@ def filter_intervals_with_roots(function, possible_points_set, interval_begin, i
 
         last_param, last_value = param, value
 
+    param = interval_end
     value = eval_func(function, interval_end)
     if value * last_value < 0:
-        # intervals_with_roots.append([last_param.evalf(), interval_end])
-        intervals_with_roots.append([x.evalf() for x in remove_extreme_points(function, last_param, interval_end)])
+        if param - last_param > MAX_DOMAIN_LENGTH:
+            last_param, param = minimize_interval(function, last_param, param)
+        intervals_with_roots.append([x.evalf() for x in remove_extreme_points(function, last_param, param)])
 
     elif value == 0:
         intervals_with_roots.append([interval_end, interval_end])
@@ -101,6 +104,8 @@ def find_intervals_with_root(function, interval_begin=-100, interval_end=100):
     if special_points_set.is_empty:
         if eval_func(function, interval_begin) * eval_func(function, interval_end) < 0:
             return [[interval_begin, interval_end]]
+    if special_points_set.is_ComplexRegion:
+        return []
 
     interval_begin = Float(interval_begin)
     interval_end = Float(interval_end)
@@ -115,7 +120,6 @@ def find_intervals_with_root(function, interval_begin=-100, interval_end=100):
 def eval_func(func, arg):
     x = float(arg)
     return float(ne.evaluate(str(func)))
-    # return round(func.evalf(subs={X_ARG: arg}), 14)
 
 
 def derivative(function, rank=1):
@@ -168,12 +172,13 @@ def next_point(func, prev_x, fixed_x):
 def is_convergence_condition_satisfied(function, beg, end):
     second_derivative_of_func = derivative(function, 2)
 
-    if eval_func(function, beg) * eval_func(function, end) > 0:
+    if eval_func(function, beg) * eval_func(function, end) >= 0:
         return False
     if len(find_intervals_with_root(second_derivative_of_func, beg, end)) > 0:
         return False
     if not is_defined_function(function, beg, end):
         return False
+
 
     return True
 
@@ -196,7 +201,7 @@ def trim_number(number, decimal_value):
 def the_chord_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION_AFTER_DECIMAL_POINT)):
     if not safe_mode:
         if not is_convergence_condition_satisfied(function, beg, end):
-            return False
+            return ["null", 0]
 
     fixed_x, previous_x = identify_points(function, beg, end)
     if beg == end:
@@ -216,7 +221,7 @@ def the_chord_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION_
             return [trim_number(float(next_x), -PRECISION_POINT), iteration_number]
         previous_x = next_x
 
-    return False
+    return ["iter_error", MAX_CHORD_ITERATION_NUMBER]
 
 
 # todo Исправить принятие информации в main
@@ -224,9 +229,9 @@ def the_chord_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION_
 def the_binary_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION_AFTER_DECIMAL_POINT)):
     if not safe_mode:
         if not is_defined_function(function, beg, end):
-            return False
-        if eval_func(function, beg) * eval_func(function, end) > 0:
-            return False
+            return ["null", 0]
+        if eval_func(function, beg) * eval_func(function, end) >= 0:
+            return ["null", 0]
 
     start = beg
     final = end
@@ -241,22 +246,23 @@ def the_binary_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION
             start = pivot
         iter += 1
 
-    if iter < 100000:
+    if iter < MAX_BINARY_ITERATION_NUMBER:
         PRECISION_POINT = int(log10(eps))
         return [trim_number(float(pivot), -PRECISION_POINT), iter]
 
-    return False
+    return ["iter_error", MAX_BINARY_ITERATION_NUMBER]
 
 
 if __name__ == "__main__":
     # f = sympify(input('Input function with "x" argument: '))
-    f = X_ARG + cos(X_ARG) - 2
-    # f = cos(X_ARG) ** (2)
+    # f = X_ARG + cos(X_ARG) - 2
+    f = X_ARG**2-2
 
     # f = X_ARG ** (1/2)
     # print(is_defined_function(f, -3, 5))
 
-    a, b = find_intervals_with_root(f)[0]
+    # a, b = find_intervals_with_root(f)[0]
+    a, b = -2, -1
     l, k = the_chord_method(f, a, b)
     b, i = the_binary_method(f, a, b)
     print('The first finding root: ', l, " - ", b)
