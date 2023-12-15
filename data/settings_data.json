@@ -1,8 +1,8 @@
 {
    "general": {
-      "accuracy": 6,
-      "left_interval": -100,
-      "right_interval": 100
+      "accuracy": 7,
+      "left_interval": -10,
+      "right_interval": 10
    },
    "comparing": {
       "first_accuracy": 3,

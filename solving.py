@@ -1,5 +1,4 @@
-from builtins import max
-
+import sympy
 from sympy import *
 import numexpr as ne
 from math import isnan, log10
@@ -47,7 +46,7 @@ def minimize_interval(function, beg, end):
     return interval
 
 
-# todo: добавить проверки на действительные числа. Пока что функция должная быть определена на отрезке [interval_begin, interval_end]
+# todo: добавить проверки на действительные числа.
 def filter_intervals_with_roots(function, possible_points_set, interval_begin, interval_end):
     intervals_with_roots = []
     last_param = interval_begin
@@ -97,9 +96,15 @@ def filter_intervals_by_second_der(function, input_intervals):
 
 
 # Функция должная быть определена на отрезке [interval_begin, interval_end]
-def find_intervals_with_root(function, interval_begin=-100, interval_end=100):
+def find_intervals_with_root(function, interval_begin=-10, interval_end=10):
     derivative_of_func = derivative(function)
     special_points_set = solveset(derivative_of_func, X_ARG)
+    if special_points_set.is_ComplexRegion:
+        return []
+    print(special_points_set)
+
+    special_points_set = special_points_set.intersect(sympy.Reals)
+    print(special_points_set)
 
     if special_points_set.is_empty:
         if eval_func(function, interval_begin) * eval_func(function, interval_end) < 0:
@@ -179,7 +184,6 @@ def is_convergence_condition_satisfied(function, beg, end):
     if not is_defined_function(function, beg, end):
         return False
 
-
     return True
 
 
@@ -224,8 +228,6 @@ def the_chord_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION_
     return ["iter_error", MAX_CHORD_ITERATION_NUMBER]
 
 
-# todo Исправить принятие информации в main
-
 def the_binary_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION_AFTER_DECIMAL_POINT)):
     if not safe_mode:
         if not is_defined_function(function, beg, end):
@@ -238,7 +240,7 @@ def the_binary_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION
 
     iter = 0
     # todo Заменить проверку на константу
-    while (end - beg) / (2 ** iter) >= eps and iter < 100000:
+    while (end - beg) / (2 ** iter) >= eps and iter < MAX_BINARY_ITERATION_NUMBER:
         pivot = (start + final) / 2.0
         if eval_func(function, start) * eval_func(function, pivot) < 0:
             final = pivot
@@ -254,16 +256,6 @@ def the_binary_method(function, beg, end, safe_mode=False, eps=10 ** (-PRECISION
 
 
 if __name__ == "__main__":
-    # f = sympify(input('Input function with "x" argument: '))
-    # f = X_ARG + cos(X_ARG) - 2
-    f = X_ARG**2-2
+    f = sympify(input('Input function with "x" argument: '))
 
-    # f = X_ARG ** (1/2)
-    # print(is_defined_function(f, -3, 5))
-
-    # a, b = find_intervals_with_root(f)[0]
-    a, b = -2, -1
-    l, k = the_chord_method(f, a, b)
-    b, i = the_binary_method(f, a, b)
-    print('The first finding root: ', l, " - ", b)
-    print('Iteration number: ', k, " - ", i)
+    print(f)
